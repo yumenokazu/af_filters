@@ -73,7 +73,3 @@ def create_driver(driver_type: str) -> 'WebDriver':
         binary = FirefoxBinary('C:\\Software\\ff\\firefox.exe') # :TODO: move path to config file
         return webdriver.Firefox(firefox_binary=binary)
 
-
-# test_item = Item("Headhunter", None, None, '2')
-
-#write_with_tooltips(driver)
