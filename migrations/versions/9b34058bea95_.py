@@ -1,4 +1,4 @@
-"""empty message
+""" add category.class_name
 
 Revision ID: 9b34058bea95
 Revises: ccf9590ce2e6
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '9b34058bea95'
-down_revision = 'ccf9590ce2e6'
+down_revision = '314e597d5a6e'
 branch_labels = None
 depends_on = None
 

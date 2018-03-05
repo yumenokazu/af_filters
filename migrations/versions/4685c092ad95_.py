@@ -1,4 +1,4 @@
-"""empty message
+""" add affix_type.filter_name
 
 Revision ID: 4685c092ad95
 Revises: 9b34058bea95

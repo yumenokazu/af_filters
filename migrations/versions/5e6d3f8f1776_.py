@@ -1,4 +1,4 @@
-"""empty message
+""" create table user
 
 Revision ID: 5e6d3f8f1776
 Revises: 433885865648
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '5e6d3f8f1776'
-down_revision = '433885865648'
+down_revision = '3297199125d0'
 branch_labels = None
 depends_on = None
 

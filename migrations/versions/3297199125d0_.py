@@ -1,4 +1,4 @@
-"""empty message
+""" add affix_type.top
 
 Revision ID: 3297199125d0
 Revises: d399e57f790a
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '3297199125d0'
-down_revision = 'd399e57f790a'
+down_revision = 'f4050ab835aa'
 branch_labels = None
 depends_on = None
 

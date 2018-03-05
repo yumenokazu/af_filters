@@ -1,4 +1,4 @@
-"""empty message
+""" create tables
 
 Revision ID: de26de15a288
 Revises: 
@@ -21,7 +21,6 @@ def upgrade():
     op.create_table('affix_type',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
-    sa.Column('is_percent', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('category',
@@ -41,7 +40,6 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
     sa.Column('base', sa.String(), nullable=True),
-    sa.Column('type', sa.String(), nullable=True),
     sa.Column('chaos', sa.Float(), nullable=True),
     sa.Column('dynamic', sa.String(), nullable=True),
     sa.Column('category_id', sa.Integer(), nullable=True),
@@ -52,8 +50,6 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('item_id', sa.Integer(), nullable=True),
     sa.Column('affix_id', sa.Integer(), nullable=True),
-    sa.Column('affix_min', sa.Integer(), nullable=True),
-    sa.Column('affix_max', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['affix_id'], ['affix_type.id'], ),
     sa.ForeignKeyConstraint(['item_id'], ['item.id'], ),
     sa.PrimaryKeyConstraint('id')

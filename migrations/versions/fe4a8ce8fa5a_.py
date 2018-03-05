@@ -1,4 +1,4 @@
-"""empty message
+""" add item.note
 
 Revision ID: fe4a8ce8fa5a
 Revises: 5e6d3f8f1776
