@@ -1,9 +1,8 @@
 import re
-from abc import abstractmethod, ABCMeta, ABC
+from datetime import datetime
 
-from flask_sqlalchemy import Model
-from sqlalchemy import CheckConstraint, exists, and_
-
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import CheckConstraint, exists, and_, func
 from filter_app.app import db
 
 
@@ -18,14 +17,15 @@ class Base(db.Model):
 class Item(Base):
     __tablename__ = 'item'
 
-    def __init__(self, name, base, item_type, chaos):
+    def __init__(self, name, base, item_type, chaos, note, fated = None):
         self.name = name  # 0st td, 1st span, 2nd span inside
         self.base = base  # 0st td, 1st span, 3rd span inside
         self.item_type = item_type  # 1nd td
         # self.exalt = exalt  # 4th td 1st span
         non_decimal = re.compile(r'[^\d.]+')
         self.chaos = non_decimal.sub('', chaos)  # 4th td 2nd span
-        # self.dynamic = non_decimal.sub('', chaos)
+        self.note = note
+        fated = False if (fated is None) else True # false by default
 
     id = db.Column(db.Integer, primary_key=True)
 
@@ -33,18 +33,18 @@ class Item(Base):
     base = db.Column(db.String)  # workpiece required for item creation
     item_type = db.Column(db.String)  # item type
     chaos = db.Column(db.Float)  # cost in chaos
-    dynamic = db.Column(db.String)  # previous cost in chaos
     note = db.Column(db.String)  # note to distinguish between items with same name
     fated = db.Column(db.Boolean)  # property to determine whether item is fated (true) or not (false)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))  # n:1 item:category, access .category
 
     affixes = db.relationship('Affix', backref='item')  # one item can have many affixes
+    prices = db.relationship('Price', backref='item') # one item can have many prices
 
     def exists(self):
         return db.session.query(exists().where(and_(Item.name == self.name, Item.note == self.note))).scalar()
 
     def __repr__(self):
-        return "Item(name=%s, base=%s, type=%s, chaos=%s, note=%s)" % (self.name, self.base,
+        return "<Item(name=%s, base=%s, type=%s, chaos=%s, note=%s)>" % (self.name, self.base,
                                                                        self.item_type, self.chaos, self.note)
 
 
@@ -72,7 +72,7 @@ class Category(Base):
         return db.session.query(exists().where(Category.name == self.name)).scalar()
 
     def __repr__(self):
-        return "<Category(id='%s', name='%s', link='%s', quantity='%s', class_name='%s')" % (
+        return "<Category(id='%s', name='%s', link='%s', quantity='%s', class_name='%s')>" % (
             self.id, self.name, self.link, self.quantity, self.class_name)
 
 
@@ -86,7 +86,7 @@ class AffixType(Base):
         self.top = top
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)  # affix name
+    name = db.Column(db.String, unique=True)  # affix name
     filter_name = db.Column(db.String)  # affix abbr as in filter file
     top = db.Column(db.String(3), CheckConstraint('top.in_(["max", "min"])', name='check_top'))  # minimize or maximize
     affixes = db.relationship('Affix', backref='affix_type')  # one affix type can have many affixes
@@ -95,7 +95,7 @@ class AffixType(Base):
         return db.session.query(exists().where(AffixType.name == self.name)).scalar()
 
     def __repr__(self):
-        return "<AffixType(id='%s', name='%s', filter_name='%s', top='%s')" % (
+        return "<AffixType(id='%s', name='%s', filter_name='%s', top='%s')>" % (
             self.id, self.name, self.filter_name, self.top)
 
 
@@ -109,17 +109,24 @@ class Affix(Base):
         self.affix_max = affix_max
 
     id = db.Column(db.Integer, primary_key=True)
-    item_id = db.Column(db.Integer, db.ForeignKey("item.id"))  # use .item to access associated object of class Item
+    item_id = db.Column(db.Integer, db.ForeignKey("item.id"), nullable=False)  # use .item to access associated object of class Item
     af_text = db.Column(db.String)  # full affix text
-    affix_id = db.Column(db.Integer, db.ForeignKey("affix_type.id"))  # use .affix_type property to access AffixType obj
-    affix_min = db.Column(db.Integer)  # min affix value
-    affix_max = db.Column(db.Integer)  # max affix value
+    affix_id = db.Column(db.Integer, db.ForeignKey("affix_type.id"), nullable=False)  # use .affix_type property to access AffixType obj
+    affix_min = db.Column(db.Numeric(10,5))  # min affix value
+    affix_max = db.Column(db.Numeric(10,5))  # max affix value
 
     def exists(self):
-        pass
+        return db.session.query(exists().where(and_(Affix.item_id == self.item_id,
+                                                    Affix.af_text == self.af_text))).scalar()
+
+    def af_text_shortener(self, repl=None) -> str:
+        if repl is None:
+            repl = ""
+        letters = re.compile(r'[^a-zA-Z ]')  # everything except a-zA-z and space
+        return letters.sub(repl, self.af_text).strip()
 
     def __repr__(self):
-        return "<Affix(id='%s', item_id='%s', af_text='%s', affix_id='%s', affix_min='%s', affix_max='%s')" % (
+        return "<Affix(id='%s', item_id='%s', af_text='%s', affix_id='%s', affix_min='%s', affix_max='%s')>" % (
             self.id, self.item_id, self.af_text, self.affix_id, self.affix_min, self.affix_max)
 
 
@@ -141,7 +148,7 @@ class GeneralSettings(Base):
         pass
 
     def __repr__(self):
-        return "<GeneralSettings(id='%s', user_id='%s', affix_pct='%s', chaos_threshold='%s')" % (
+        return "<GeneralSettings(id='%s', user_id='%s', affix_pct='%s', chaos_threshold='%s')>" % (
             self.id, self.user_id, self.affix_pct, self.chaos_threshold)
 
 
@@ -163,7 +170,7 @@ class AffixSettings(Base):
         pass
 
     def __repr__(self):
-        return "<AffixSettings(id='%s', user_id='%s', affix_id='%s', affix_pct='%s')" % (
+        return "<AffixSettings(id='%s', user_id='%s', affix_id='%s', affix_pct='%s')>" % (
             self.id, self.user_id, self.affix_id, self.affix_pct)
 
 
@@ -188,7 +195,7 @@ class ItemSettings(Base):
         pass
 
     def __repr__(self):
-        return "<ItemSettings(id='%s', user_id='%s', item_id='%s', affix_pct='%s')" % (
+        return "<ItemSettings(id='%s', user_id='%s', item_id='%s', affix_pct='%s')>" % (
             self.id, self.user_id, self.item_id, self.affix_pct)
 
 
@@ -203,5 +210,31 @@ class User(Base):
         pass
 
     def __repr__(self):
-        return "<User(id='%s', nick='%s')" % (
+        return "<User(id='%s', nick='%s')>" % (
             self.id, self.nick)
+
+
+# stores prices for items on each date
+class Price(Base):
+    __tablename__ = 'price'
+
+    def __init__(self, item_id, price):
+        self.item_id = item_id
+        self.price = price
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey("item.id"),
+                        nullable=False)  # use .item to access associated object of class Item
+    price = db.Column(db.Numeric(10,2))  # price in chaos
+    date = db.Column(db.DateTime, server_default=func.now()) # server date on insert
+
+    def exists(self):
+        return db.session.query(exists().where(and_(Price.item_id == self.item_id,
+                                                    func.DATE(Price.date) == datetime.now().date()))).scalar()
+
+    def __repr__(self):
+        return "<Price(id='%s', item_id='%s', price='%s', date='%s')>" % (
+            self.id, self.item_id, self.price, self.date)
+
+
+
