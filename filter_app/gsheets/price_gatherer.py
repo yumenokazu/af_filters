@@ -1,5 +1,5 @@
 from filter_app.crawler import request_url, create_driver
-from filter_app.parser import parse_page
+
 from filter_app.app import db
 from filter_app.dbhelper import select_all, insert
 from filter_app.models import Category, Price, Item
@@ -10,6 +10,7 @@ def gather_prices():
     """
     Gathers current prices for items in each category and insert gathered data into price table
     """
+    from filter_app.parser import parse_page
     driver = create_driver('FF')     # create driver
     cats = select_all(Category, db)  # get links for parsing
     db_items = select_all(Item, db)  # get existing items
