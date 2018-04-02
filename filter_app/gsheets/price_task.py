@@ -12,7 +12,7 @@ atexit.register(lambda: scheduler.shutdown()) # shutdown scheduler when flask st
 
 
 # Schedules update_prices to be run every day
-@scheduler.scheduled_job('cron', hour='18')  # every day of every year at 18hr
+@scheduler.scheduled_job('cron', hour='21', minute="22", misfire_grace_time=3600, coalesce=True)  # every day of every year at 18hr
 def update_prices():
     """
     Calls functions for adding gathered prices to the db and updating google spreadsheet with new prices
