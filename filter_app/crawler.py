@@ -2,6 +2,8 @@ import logging
 import time
 import typing
 
+from filter_app.app import app
+
 from selenium.common.exceptions import NoSuchElementException
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
@@ -61,15 +63,25 @@ def request_with_tooltip(link, web_driver) -> typing.List[str]:
     return page_sources
 
 
-def create_driver(driver_type: str) -> 'WebDriver':
+class Driver(object):
     """
-    creates and returns web_driver of specified type
-    :param driver_type: 'JS' for PhantomJS, 'FF' for Firefox
-    :return: selenium.webdriver.firefox.webdriver.WebDriver
+    WebDriver of a specific type
     """
-    if driver_type == 'JS':
-        return webdriver.PhantomJS(service_args=['--ignore-ssl-errors=true'])  # :TODO: Why phantom js not scrolling
-    elif driver_type == "FF":
-        binary = FirefoxBinary('C:\\Software\\ff\\firefox.exe') # :TODO: move path to config file
-        return webdriver.Firefox(firefox_binary=binary)
+    driver = None
 
+    def __init__(self, driver_type:str):
+        """Constructor.
+        :param driver_type: 'JS' for PhantomJS, 'FF' for Firefox
+        :return: a Driver object
+        """
+        if driver_type == 'JS':
+            self.driver = webdriver.PhantomJS(service_args=['--ignore-ssl-errors=true'])  # :TODO: Why phantom js not scrolling
+        elif driver_type == "FF":
+            binary = app.config['FIREFOX_BINARY_PATH'] # :TODO: handle exceptions
+            self.driver = webdriver.Firefox(firefox_binary=binary)
+
+    def __enter__(self) -> 'WebDriver':
+        return self.driver
+
+    def __exit__(self, type, value, traceback):
+        self.driver.close()
