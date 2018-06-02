@@ -1,10 +1,17 @@
 import typing
-from flask_sqlalchemy import SQLAlchemy
 import logging
 from filter_app.app import db
 
 
-def insert(db_obj: db.Model, db: SQLAlchemy) -> typing.NoReturn:
+def commit():
+    """
+    commits
+    """
+    # :TODO: everything's wrong here
+    db.session.commit()
+
+
+def insert(db_obj: db.Model) -> typing.NoReturn:
     '''
     inserts single db_obj into db
     '''
@@ -17,7 +24,7 @@ def insert(db_obj: db.Model, db: SQLAlchemy) -> typing.NoReturn:
             logging.exception(e, exc_info=True)
 
 
-def insert_many(db_objs: typing.List[db.Model], db: SQLAlchemy) -> typing.NoReturn:
+def insert_many(db_objs: typing.List[db.Model]) -> typing.NoReturn:
     '''
     inserts list of objects into db
     '''
@@ -28,26 +35,49 @@ def insert_many(db_objs: typing.List[db.Model], db: SQLAlchemy) -> typing.NoRetu
         logging.exception(e, exc_info=True)
 
 
-def select_all(obj_class: typing.Type[db.Model], db: SQLAlchemy):
+def update(db_obj: db.Model, fields: typing.Dict) -> typing.NoReturn:
+    """
+    updates attributes on existing db_obj
+    :param db_obj:
+    :param fields: dictionary of attribute names and respective values
+    """
+    try:
+        for k, v in fields.items():
+            setattr(db_obj, k, v)
+        db.session.commit()
+    except Exception as e:
+        logging.exception(e, exc_info=True)
+
+
+def select_all(obj_class: typing.Type[db.Model]):
     '''
-    return all items in table defined by object class
+    returns all items in table defined by object class
     e.g items = select_all(Item, db)
     '''
     return db.session.query(obj_class).all()
 
 
-def select_by_id(obj_class: typing.Type[db.Model], id: int, db: SQLAlchemy):
+def select_by_id(obj_class: typing.Type[db.Model], id: int):
     '''
-    return all items in table defined by object class and id
+    returns all items in table defined by object class and id
     e.g items = select_all(Item, 5, db)
     '''
     return db.session.query(obj_class).get(id)
 
 
-def check_exists(obj: db.Model, db: SQLAlchemy) -> bool:
-    '''
-    check if obj exists in db
-    '''
-    obj_class = obj.__class__
-    return db.session.query(obj_class.query.filter(obj_class == obj))
+def select_by_fields(obj_class: typing.Type[db.Model], fields: typing.Dict):
+    """
+    returns all items filtered by {field: value} in fields dictionary in table defined by object class
+    :param obj_class: mapped class
+    :param fields: dictionary with fields and their values
+    :param db: object for querying database
+    :return: list of objects of obj_class or None
+    """
+    if fields:
+        return db.session.query(obj_class).filter_by(**fields)
+    else:
+        return None
+
+
+
 
