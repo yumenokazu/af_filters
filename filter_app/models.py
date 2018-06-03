@@ -309,8 +309,10 @@ class League(Base):
     main = db.Column(db.Boolean, nullable=False) # true if league, false if event
 
     def is_current(self):
-        today = datetime.datetime.now().date()
-        if (today > self.start.date()) and (today < self.end.date()):
+        today = datetime.now().date()
+        if (self.end is None) and (today > self.start):
+            return True
+        elif (today > self.start) and (today < self.end):
             return True
         else:
             return False
