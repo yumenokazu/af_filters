@@ -12,11 +12,7 @@ from oauth2client.file import Storage
 from config import basedir
 from string import ascii_uppercase as letters
 
-try:
-    import argparse
-    flags = tools.argparser.parse_args([])
-except ImportError:
-    flags = None
+
 
 # If modifying these scopes, delete your previously saved credentials
 SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
@@ -33,6 +29,12 @@ def _get_credentials():
     Returns:
         Credentials, the obtained credential.
     """
+    try:
+        import argparse
+        flags = tools.argparser.parse_args([])
+    except ImportError:
+        flags = None
+
     credential_dir = os.path.join(basedir, 'filter_app', 'gsheets')
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
